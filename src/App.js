@@ -4,10 +4,10 @@ import React,{useState} from "react";
 function App() {
   const [movies, setMovies] = useState([]);
 
-  const handleFetch = () => { 
-    fetch('https://swapi.dev/api/films/').then((response)=>{
-    return response.json();
-  }).then((data)=>{
+  async function handleFetch (){ 
+    const response = await fetch('https://swapi.dev/api/films/');
+    const data = await response.json();
+ 
     const transformedMovies = data.results.map((item)=>{
       return {
         id:item.episode_id,
@@ -17,8 +17,8 @@ function App() {
       }
     })
     setMovies(transformedMovies);
-  })  
-  }
+  }  
+  
   
   return (
     <div>
