@@ -4,7 +4,9 @@ import React,{useState} from "react";
 function App() {
   const [movies, setMovies] = useState([]);
   const [isloading, setIsLoading] = useState(false);
-  const [error, setError] = useState()
+  const [error, setError] = useState(null);
+  const [retryTimer, setRetryTimer] = useState();
+  const [check, setCheck] = useState(false);
 
   async function handleFetch (){ 
     try{
@@ -13,7 +15,7 @@ function App() {
     const response = await fetch('https://swapi.dev/api/film/');
     
     if(!response.ok){
-      throw new Error("Something went wrong!");
+      throw new Error("Something went wrong...retrying");
     }
 
     const data = await response.json();
@@ -30,22 +32,30 @@ function App() {
     
     }catch(error){
       setError(error.message)
+      setCheck(true);
+
+      const retry_timer = setTimeout(()=>{
+        handleFetch();
+      },5000);
+      setRetryTimer(retry_timer);
     }
     setIsLoading(false);
-
-    
-
   }  
   
+  const handleCancelRetry = () => {
+    clearTimeout(retryTimer);
+    setCheck(false);
+  }
   
   return (
     <div>
      <center><button onClick={handleFetch}>Show Movies</button></center>
+      {isloading && <center><p>loading....</p></center>}
       {!isloading && movies.length>0 && <MovieList movies={movies}/>}
       {!isloading && movies.length === 0 && !error && <center><p>No Movies Found...</p></center>}
-      {!isloading && error && <center><p>Something went wrong..</p></center>}
-      {isloading && <center><p>loading....</p></center>}
-      
+      {check && !isloading && error && <center><p>{error}</p><br/>
+      <button onClick={handleCancelRetry}>STOP RETRYING</button> </center>}
+      {!check && !isloading && error && <center><p>Nothing to show...</p></center>}
     </div>
   );
 }
