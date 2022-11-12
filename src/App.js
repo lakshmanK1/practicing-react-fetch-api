@@ -8,6 +8,39 @@ function App() {
   const [retryTimer, setRetryTimer] = useState();
   const [check, setCheck] = useState(false);
 
+  //For Handleing form
+  const [title, setTitle] = useState('');
+  const [openText, setOpenText] = useState('');
+  const [releaseDate, setReleaseDate] = useState();
+
+  const handleTitle = (e) => {
+    setTitle(e.target.value);
+  }
+  const handleOpentext = (e) => {
+    setOpenText(e.target.value);
+  }
+  const handleReleaseDate = (e) => {
+    setReleaseDate(e.target.value);
+  }
+
+  const handleSubmitForm = (e) => {
+    e.preventDefault();
+
+    const UserData = {
+      Title : title,
+      OpenText : openText,
+      ReleaseDate : new Date (releaseDate)
+    }
+
+    console.log(UserData);
+
+    setTitle('');
+    setOpenText('');
+    setReleaseDate('');
+
+
+  }
+
 
   const handleFetch = useCallback(async () => { 
     try{
@@ -54,6 +87,18 @@ function App() {
   
   return (
     <div>
+      <center>
+      <form onSubmit={handleSubmitForm}>
+        <label>Title:</label>
+        <input type='text'value={title} onChange={handleTitle}/><br/>
+        <label>Opening Text:</label>
+        <input type='text' value={openText} onChange={handleOpentext}/><br/>
+        <label>Release Date:</label>
+        <input type='date' value={releaseDate} onChange={handleReleaseDate}/><br/>
+        <button type="submit">Add Movie</button>
+      </form>
+      </center>
+      
      <center><button onClick={handleFetch}>Show Movies</button></center>
       {isloading && <center><p>loading....</p></center>}
       {!isloading && movies.length>0 && <MovieList movies={movies}/>}
