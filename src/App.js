@@ -1,5 +1,7 @@
 import MovieList from "./components/MoviesList";
 import React,{useCallback, useEffect, useState} from "react";
+import MoviesForm from "./components/MoviesForm";
+import MoviesList from "./components/MoviesList";
 
 function App() {
   const [movies, setMovies] = useState([]);
@@ -8,61 +10,31 @@ function App() {
   const [retryTimer, setRetryTimer] = useState();
   const [check, setCheck] = useState(false);
 
-  //For Handleing form
-  const [title, setTitle] = useState('');
-  const [openText, setOpenText] = useState('');
-  const [releaseDate, setReleaseDate] = useState();
-
-  const handleTitle = (e) => {
-    setTitle(e.target.value);
-  }
-  const handleOpentext = (e) => {
-    setOpenText(e.target.value);
-  }
-  const handleReleaseDate = (e) => {
-    setReleaseDate(e.target.value);
-  }
-
-  const handleSubmitForm = (e) => {
-    e.preventDefault();
-
-    const UserData = {
-      Title : title,
-      OpenText : openText,
-      ReleaseDate : new Date (releaseDate)
-    }
-
-    console.log(UserData);
-
-    setTitle('');
-    setOpenText('');
-    setReleaseDate('');
-
-
-  }
-
-
   const handleFetch = useCallback(async () => { 
     try{
       setIsLoading(true);
     setError(null);
-    const response = await fetch('https://swapi.dev/api/films/');
+
+    const response = await fetch('https://my-react-fetch-default-rtdb.firebaseio.com/movies.json');
     
     if(!response.ok){
       throw new Error("Something went wrong...retrying");
     }
 
     const data = await response.json();
+
+    const loadedData = [];
+
+    for(const key in data){
+      loadedData.push({
+        id:key,
+        title:data[key].title,
+        openingText:data[key].openingText,
+        releaseDate:data[key].releaseDate
+      });
+    }
  
-    const transformedMovies = data.results.map((item)=>{
-      return {
-        id:item.episode_id,
-        title:item.title,
-        openingText:item.opening_crawl,
-        releaseDate:item.release_date
-      }
-    })
-    setMovies(transformedMovies);
+    setMovies(loadedData);
     
     }catch(error){
       setError(error.message)
@@ -76,32 +48,49 @@ function App() {
     setIsLoading(false);
   },[]) 
 
-  useEffect(()=>{
-    handleFetch();
-  },[handleFetch])
+  // useEffect(()=>{
+  //   handleFetch();
+  // },[handleFetch])
   
   const handleCancelRetry = () => {
     clearTimeout(retryTimer);
     setCheck(false);
   }
+
+  async function moviesAddFormHandle (dataMovies) {
+    const response = await fetch('https://my-react-fetch-default-rtdb.firebaseio.com/movies.json',{
+      method:'POST',
+      body:JSON.stringify(dataMovies),
+      headers:{
+        'content-type' : 'application/json'
+      }
+    });
+    const data = await response.json();
+    console.log(data);
+  }
+
+  const deleteMovieHandler = async (id) => {
+    console.log({ id });
+    await fetch(
+      "https://my-react-fetch-default-rtdb.firebaseio.com/movies/${id}",
+      {
+        method: "DELETE",
+        body: JSON.stringify(movies),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    handleFetch();
+  };
   
   return (
     <div>
-      <center>
-      <form onSubmit={handleSubmitForm}>
-        <label>Title:</label>
-        <input type='text'value={title} onChange={handleTitle}/><br/>
-        <label>Opening Text:</label>
-        <input type='text' value={openText} onChange={handleOpentext}/><br/>
-        <label>Release Date:</label>
-        <input type='date' value={releaseDate} onChange={handleReleaseDate}/><br/>
-        <button type="submit">Add Movie</button>
-      </form>
-      </center>
-      
+      <MoviesForm handleMoviesForm={moviesAddFormHandle}/>
+      <MoviesList movies={movies} deleteRequestApp={deleteMovieHandler} />
      <center><button onClick={handleFetch}>Show Movies</button></center>
       {isloading && <center><p>loading....</p></center>}
-      {!isloading && movies.length>0 && <MovieList movies={movies}/>}
+      {/* {!isloading && movies.length>0 && <MovieList movies={movies}/>} */}
       {!isloading && movies.length === 0 && !error && <center><p>No Movies Found...</p></center>}
       {check && !isloading && error && <center><p>{error}</p><br/>
       <button onClick={handleCancelRetry}>STOP RETRYING</button> </center>}
